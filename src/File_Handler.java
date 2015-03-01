@@ -1,10 +1,6 @@
-import java.io.BufferedWriter;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
-import java.io.FileWriter;
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 
@@ -19,6 +15,7 @@ public class File_Handler {
 
 	
 	private byte[] byteKey = "Hello Cripto!!".getBytes();
+	private final int stride = 10;
 	
 	
 	public void genKey(String file) throws IOException, NoSuchAlgorithmException, NoSuchPaddingException{
@@ -31,7 +28,11 @@ public class File_Handler {
 	
 	public void encrypt(){
 		
-		String string ="Hello, everything ok?? Good, you broke the RC4 cipher!!";
+		//String for tests
+		String byteString ="Hello, everything ok?? Good, you broke the RC4 cipher!!!";
+		int i=0, length = byteString.length();
+		int offset;
+		byte[] encrypted;
 		
 		try{
 			SecretKeySpec sks = new SecretKeySpec(byteKey, "RC4");
@@ -40,17 +41,27 @@ public class File_Handler {
 			
 			FileOutputStream out =  new FileOutputStream("encrypt.txt");
 			
-			byte[] encrypted= c.doFinal(string.getBytes());
-			
-			out.write(encrypted);
-			out.flush();
+			while((offset = i*stride) < length){
+				if(offset +stride >length){
+					encrypted= c.doFinal(byteString.getBytes(),offset,length-offset);
+					out.write(encrypted,0,length-offset);
+				}
+				else{
+					encrypted= c.doFinal(byteString.getBytes(),i,stride);
+					out.write(encrypted,0,stride);
+				}
+				out.flush();
+				i++;
+			}
 			out.close();
 		}catch(IOException | NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeyException | IllegalBlockSizeException | BadPaddingException e){}
-		
 	}
 	
 	public void decrypt(){
 	
+		int length, i=0;
+		byte[] toDecrypt = new byte[stride];
+		
 		try{
 			FileInputStream in = new FileInputStream("encrypt.txt");
 			FileOutputStream out =  new FileOutputStream("decrypt.txt");
@@ -58,19 +69,15 @@ public class File_Handler {
 			SecretKeySpec sks = new SecretKeySpec(byteKey, "RC4");
 			Cipher c = Cipher.getInstance("RC4");
 			c.init(Cipher.DECRYPT_MODE , sks);
-		
-			byte[] toDecrypt = new byte[32];
-
-			while((in.read(toDecrypt) ) != -1){ 
-				out.write(c.doFinal(toDecrypt));
-				out.flush();
-			}
 			
+			while((length =(in.read(toDecrypt, 0, stride)) ) != -1){ 
+				out.write(c.doFinal(toDecrypt, 0, length));
+				out.flush();
+				i++;
+			}
 			out.close();
 			in.close();
-			
 		}catch(IOException | NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeyException | IllegalBlockSizeException | BadPaddingException e){}
-		
 	}
 	
 	
