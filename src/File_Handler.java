@@ -15,7 +15,7 @@ public class File_Handler {
 
 	
 	private byte[] byteKey = "Hello Cripto!!".getBytes();
-	private final int stride = 10;
+	private final int stride = 2;
 	
 	
 	public void genKey(String file) throws IOException, NoSuchAlgorithmException, NoSuchPaddingException{
@@ -47,19 +47,21 @@ public class File_Handler {
 					out.write(encrypted,0,length-offset);
 				}
 				else{
-					encrypted= c.doFinal(byteString.getBytes(),i,stride);
+					encrypted= c.doFinal(byteString.getBytes(),offset,stride);
 					out.write(encrypted,0,stride);
 				}
 				out.flush();
 				i++;
 			}
+			//out.write(c.doFinal(byteString.getBytes()));
+			//out.flush();
 			out.close();
 		}catch(IOException | NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeyException | IllegalBlockSizeException | BadPaddingException e){}
 	}
 	
 	public void decrypt(){
 	
-		int length, i=0;
+		int length;
 		byte[] toDecrypt = new byte[stride];
 		
 		try{
@@ -70,10 +72,11 @@ public class File_Handler {
 			Cipher c = Cipher.getInstance("RC4");
 			c.init(Cipher.DECRYPT_MODE , sks);
 			
-			while((length =(in.read(toDecrypt, 0, stride)) ) != -1){ 
+			length = in.read(toDecrypt, 0, stride);
+			while(length != -1){ 
 				out.write(c.doFinal(toDecrypt, 0, length));
 				out.flush();
-				i++;
+				length = in.read(toDecrypt, 0, stride);
 			}
 			out.close();
 			in.close();
