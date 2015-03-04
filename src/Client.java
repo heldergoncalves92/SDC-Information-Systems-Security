@@ -1,21 +1,17 @@
 import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
 import java.net.Socket;
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
-
 import javax.crypto.Cipher;
 import javax.crypto.CipherOutputStream;
-import javax.crypto.NoSuchPaddingException;
-import javax.crypto.spec.SecretKeySpec;
 
 
-public class Client{
+
+public class Client extends InitCipher{
 	
-	private byte[] key = "HELLO cripto!!".getBytes();
+	private byte[] key = "1234567812345678".getBytes();
+	private byte[] iv = "1234567812345678".getBytes();
+	
 	private boolean bool = true;
 	
 	public Client(){}
@@ -24,48 +20,68 @@ public class Client{
 		/*	String host = args[0];
 		int port = Integer.parseInt(args[1]);
 		Socket s = new Socket(host, port);
-		*/String msg = "";
+		*/
+		Cipher c;
+		String msg = "";
+		int i, offset;
+		int blockDim = 16;
+		byte[] toEncrypt;
+		byte[] endLine = new byte[16];
+		endLine[0]=(byte)'\n';
 		
 		Socket s;
-		try {
-			s = new Socket("localhost", 	6000);
 		
-			BufferedReader sockIn = new BufferedReader( new InputStreamReader(System.in));
-			BufferedWriter sockOut = new BufferedWriter( new OutputStreamWriter(s.getOutputStream()));
+		
+		try {
+			s = new Socket("localhost", 6000);
+		
+			BufferedReader in = new BufferedReader( new InputStreamReader(System.in));
+			//BufferedWriter sockOut = new BufferedWriter( new OutputStreamWriter(s.getOutputStream()));
 			
-			//SecretKeySpec sks = new SecretKeySpec( key, "RC4");
-			//Cipher c = Cipher.getInstance("RC4");
-			
-			SecretKeySpec sks = new SecretKeySpec( key, "AES");
-			Cipher c = Cipher.getInstance("AES/CBC/PKCS5Padding");
-			c.init(Cipher.ENCRYPT_MODE , sks);
+			//Init Cipher
+			String type = "AES/CBC/PKCS5Padding";
+			c = initCipherByType(type, Cipher.ENCRYPT_MODE, key, iv);
 			
 			CipherOutputStream cos = new CipherOutputStream(s.getOutputStream(), c);
-			int test;
 			
 			while(bool){
 				
-				while((test = System.in.read()) != -1){
-					cos.write((byte)test);
-					cos.flush();
+			
+				msg = in.readLine();
+				System.out.println(msg.length());
+				
+				toEncrypt = msg.getBytes();
+				for(i=0; (offset=i*blockDim) < msg.length(); i++){
+					if(msg.length()-offset >= blockDim){
+						cos.write(toEncrypt, offset, blockDim);
+						cos.flush();
+					}else{
+						byte[] padding = new byte[blockDim];
+						System.arraycopy(toEncrypt, offset, padding, 0, msg.length()-offset);
+						cos.write(padding);
+						cos.flush();
+					}	
 				}
+				cos.write(endLine);
+				cos.flush();
+				
 				
 				/*
-				msg = sockIn.readLine();
 				sockOut.write(msg);
 				sockOut.flush();
 				if(msg.equals("Sair")  || msg.equals("Shutsown")) break; 
-					*/
+				 */		
 			}
+			cos.close();
 			s.close();
-		} catch (IOException | NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeyException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 	}
 	
 	
-	public static void main(String[] args){
+	public static void main(String[] args) {
 		Client cli = new Client();
 		cli.runClient();
 	

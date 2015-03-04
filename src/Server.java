@@ -22,7 +22,6 @@ public class Server extends Thread {
 
 	}
 	
-	
 	private void runServer() throws IOException{
 		
 		file = new BufferedWriter( new FileWriter("in.txt"));
@@ -56,6 +55,8 @@ public class Server extends Thread {
 	
 	
 	public static void main(String[] args) throws IOException{
+		
+		
 		
 		Server server = new Server(6000);
 		server.runServer();

@@ -53,8 +53,6 @@ public class File_Handler {
 				out.flush();
 				i++;
 			}
-			//out.write(c.doFinal(byteString.getBytes()));
-			//out.flush();
 			out.close();
 		}catch(IOException | NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeyException | IllegalBlockSizeException | BadPaddingException e){}
 	}
