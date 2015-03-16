@@ -39,7 +39,8 @@ public class Client extends InitCipher{
 			//BufferedWriter sockOut = new BufferedWriter( new OutputStreamWriter(s.getOutputStream()));
 			
 			//Init Cipher
-			String type = "AES/CBC/PKCS5Padding";
+			//String type = "AES/CBC/PKCS5Padding";
+			String type = "AES/CFB8/PKCS5Padding";
 			c = initCipherByType(type, Cipher.ENCRYPT_MODE, key, iv);
 			
 			CipherOutputStream cos = new CipherOutputStream(s.getOutputStream(), c);

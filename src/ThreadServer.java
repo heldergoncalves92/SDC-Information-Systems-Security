@@ -39,7 +39,8 @@ public class ThreadServer extends InitCipher implements Runnable {
 			this.out = file;
 				
 			//Init Cipher
-			String type = "AES/CBC/PKCS5Padding";
+			//String type = "AES/CBC/PKCS5Padding";
+			String type = "AES/CFB8/PKCS5Padding";
 			c = initCipherByType(type, Cipher.DECRYPT_MODE, key, iv);
 			
 			this.cis = new CipherInputStream(s.getInputStream(), c);

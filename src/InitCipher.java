@@ -36,13 +36,14 @@ public abstract class InitCipher {
 				c = Cipher.getInstance("AES/CBC/PKCS5Padding");
 				c.init(opmode, aesKey, new IvParameterSpec(iv));
 			}
-			/*
+			
 			//Type AES/CFB8/PKCS5Padding
 			else if(type.equals("AES/CFB8/PKCS5Padding")){
-				SecretKeySpec sks = new SecretKeySpec( key, "AES");
-				c = Cipher.getInstance("AES/CFB8/PKCS5Padding");
+				SecretKeySpec aesKey = new SecretKeySpec( key, "AES");
+				c = Cipher.getInstance("AES/CBC/PKCS5Padding");
+				c.init(opmode, aesKey, new IvParameterSpec(iv));
 			}
-			
+			/*
 			//Type AES/CFB8/NoPadding
 			else if(type.equals("AES/CFB8/NoPadding")){
 				SecretKeySpec sks = new SecretKeySpec( key, "AES");
