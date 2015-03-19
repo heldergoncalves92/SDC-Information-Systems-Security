@@ -1,53 +1,55 @@
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.net.Socket;
-import java.security.InvalidAlgorithmParameterException;
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
+import java.security.KeyPair;
+import java.security.PublicKey;
 
 import javax.crypto.Cipher;
 import javax.crypto.CipherInputStream;
-import javax.crypto.CipherOutputStream;
-import javax.crypto.KeyGenerator;
-import javax.crypto.NoSuchPaddingException;
-import javax.crypto.SecretKey;
-import javax.crypto.spec.IvParameterSpec;
-import javax.crypto.spec.SecretKeySpec;
 
 
 public class ThreadServer extends InitCipher implements Runnable {
 
-	private Server server;
 	private int id;
 	private Socket socket;
 	private BufferedReader in;
-	private BufferedWriter out;
 	
-	private byte[] key = "1234567812345678".getBytes();
+	private byte[] key ;
 	private byte[] iv = "1234567812345678".getBytes();
 	private Cipher c;
 	private CipherInputStream cis;
 	
 	
 	public ThreadServer(int num, Socket s, BufferedWriter file, Server server){
+		
+		this.id=num;
+		this.socket=s;
+		
 		try{	
-			this.server=server;
-			this.id=num;
-			this.socket=s;
-			this.out = file;
-				
+			
+			//To accord the Diffie-Hellman Key
+			ObjectOutputStream oos = new ObjectOutputStream(s.getOutputStream());
+			ObjectInputStream ois = new ObjectInputStream(s.getInputStream());
+			
+			DiffieHellman df = new DiffieHellman();
+			KeyPair kPair = df.generateKey();
+			
+			oos.writeObject(kPair.getPublic());
+			oos.flush();
+			PublicKey publicKey = (PublicKey)ois.readObject();
+			
+			key = df.sessionKey(kPair.getPrivate(), publicKey);
+			
 			//Init Cipher
-			//String type = "AES/CBC/PKCS5Padding";
 			String type = "AES/CFB8/PKCS5Padding";
 			c = initCipherByType(type, Cipher.DECRYPT_MODE, key, iv);
-			
 			this.cis = new CipherInputStream(s.getInputStream(), c);
-			this.in = new BufferedReader( new InputStreamReader(s.getInputStream()));
 			
-		}catch(IOException e){
-			System.out.println("ERROR: Creating inputStream!!\n");
+		}catch(IOException | ClassNotFoundException   e){
+			System.out.println("ERROR: Creating CipherInputStream!!\n");
 		}
 	}
 	

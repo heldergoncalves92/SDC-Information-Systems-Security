@@ -1,7 +1,6 @@
 import java.math.BigInteger;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
-import java.security.Key;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
@@ -12,9 +11,11 @@ import java.security.SecureRandom;
 import javax.crypto.KeyAgreement;
 import javax.crypto.spec.DHParameterSpec;
 
-public class DifieHellman {
 
-	public DifieHellman() {
+
+public class DiffieHellman {
+
+	public DiffieHellman() {
 	}
 
 	public KeyPair generateKey() {
@@ -38,14 +39,25 @@ public class DifieHellman {
 		return aPair;
 	}
 
-	public Key sessionKey(PrivateKey secretKey, PublicKey publicKey) {
+	public byte[] sessionKey(PrivateKey secretKey, PublicKey publicKey) {
 
-		Key key = null;
+		byte[] key = null;
 
 		try {
 			KeyAgreement keyAgg = KeyAgreement.getInstance("DH");
 			keyAgg.init(secretKey);
-			key = keyAgg.doPhase(publicKey, true);
+			keyAgg.doPhase(publicKey, true);
+			key = keyAgg.generateSecret();
+			
+			System.out.println("Session key: " + key.toString() + " || "+key.length + "\n");
+			/*
+			for(byte b: key){
+				System.out.print((char)b);
+			}
+			System.out.println("\n");
+				*/
+			
+			
 
 		} catch (NoSuchAlgorithmException | InvalidKeyException e) {
 			// TODO Auto-generated catch block
@@ -55,14 +67,14 @@ public class DifieHellman {
 		return key;
 	}
 
-	public static void main(String[] args) {
+	/*public static void main(String[] args) {
 
-		DifieHellman df = new DifieHellman();
+		DiffieHellman df = new DiffieHellman();
 		KeyPair aPair = df.generateKey();
 		KeyPair bPair = df.generateKey();
 
 		df.sessionKey(aPair.getPrivate(), bPair.getPublic());
 		df.sessionKey(bPair.getPrivate(), aPair.getPublic());
 
-	}
+	}*/
 }

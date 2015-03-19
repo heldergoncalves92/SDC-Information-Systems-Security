@@ -1,7 +1,12 @@
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.net.Socket;
+import java.security.KeyPair;
+import java.security.PublicKey;
+
 import javax.crypto.Cipher;
 import javax.crypto.CipherOutputStream;
 
@@ -9,7 +14,7 @@ import javax.crypto.CipherOutputStream;
 
 public class Client extends InitCipher{
 	
-	private byte[] key = "1234567812345678".getBytes();
+	private byte[] key;
 	private byte[] iv = "1234567812345678".getBytes();
 	
 	private boolean bool = true;
@@ -17,10 +22,6 @@ public class Client extends InitCipher{
 	public Client(){}
 	
 	public void runClient(){
-		/*	String host = args[0];
-		int port = Integer.parseInt(args[1]);
-		Socket s = new Socket(host, port);
-		*/
 		Cipher c;
 		String msg = "";
 		int i, offset;
@@ -31,23 +32,32 @@ public class Client extends InitCipher{
 		
 		Socket s;
 		
-		
 		try {
 			s = new Socket("localhost", 6000);
 		
-			BufferedReader in = new BufferedReader( new InputStreamReader(System.in));
-			//BufferedWriter sockOut = new BufferedWriter( new OutputStreamWriter(s.getOutputStream()));
+			//To accord the Diffie-Hellman Key
+			ObjectOutputStream oos = new ObjectOutputStream(s.getOutputStream());
+			ObjectInputStream ois = new ObjectInputStream(s.getInputStream());
 			
+			DiffieHellman df = new DiffieHellman();
+			KeyPair kPair = df.generateKey();
+			
+			oos.writeObject(kPair.getPublic());
+			oos.flush();
+			PublicKey publicKey = (PublicKey)ois.readObject();
+			
+			key = df.sessionKey(kPair.getPrivate(), publicKey);
+		
 			//Init Cipher
-			//String type = "AES/CBC/PKCS5Padding";
-			String type = "AES/CFB8/PKCS5Padding";
+			String type = "AES/CFB8/PKCS5Padding";	
+			
 			c = initCipherByType(type, Cipher.ENCRYPT_MODE, key, iv);
 			
 			CipherOutputStream cos = new CipherOutputStream(s.getOutputStream(), c);
+			BufferedReader in = new BufferedReader( new InputStreamReader(System.in));
 			
 			while(bool){
 				
-			
 				msg = in.readLine();
 				System.out.println(msg.length());
 				
@@ -70,12 +80,15 @@ public class Client extends InitCipher{
 				/*
 				sockOut.write(msg);
 				sockOut.flush();
-				if(msg.equals("Sair")  || msg.equals("Shutsown")) break; 
+				if(msg.equals("Sair")  || msg.equals("Shutdown")) break; 
 				 */		
 			}
 			cos.close();
 			s.close();
-			} catch (IOException e) {
+			} catch (IOException   e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (ClassNotFoundException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
