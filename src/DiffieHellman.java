@@ -48,16 +48,6 @@ public class DiffieHellman {
 			keyAgg.init(secretKey);
 			keyAgg.doPhase(publicKey, true);
 			key = keyAgg.generateSecret();
-			
-			System.out.println("Session key: " + key.toString() + " || "+key.length + "\n");
-			/*
-			for(byte b: key){
-				System.out.print((char)b);
-			}
-			System.out.println("\n");
-				*/
-			
-			
 
 		} catch (NoSuchAlgorithmException | InvalidKeyException e) {
 			// TODO Auto-generated catch block

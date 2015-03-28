@@ -16,52 +16,47 @@ public class ThreadServer extends InitCipher implements Runnable {
 	private int id;
 	private Socket socket;
 	private BufferedReader in;
+	private Message_Handler handler;
 	
 	private byte[] key ;
 	private byte[] iv = "1234567812345678".getBytes();
 	private Cipher c;
-	private CipherInputStream cis;
+	private boolean bool=true;
 	
 	
 	public ThreadServer(int num, Socket s, BufferedWriter file, Server server){
 		
 		this.id=num;
 		this.socket=s;
+		PublicKey publicKey;
 		
-		try{	
+		//To accord the Diffie-Hellman Key
+		DiffieHellman df = new DiffieHellman();
+		KeyPair kPair = df.generateKey();
 			
-			//To accord the Diffie-Hellman Key
-			ObjectOutputStream oos = new ObjectOutputStream(s.getOutputStream());
-			ObjectInputStream ois = new ObjectInputStream(s.getInputStream());
-			
-			DiffieHellman df = new DiffieHellman();
-			KeyPair kPair = df.generateKey();
-			
-			oos.writeObject(kPair.getPublic());
-			oos.flush();
-			PublicKey publicKey = (PublicKey)ois.readObject();
-			
-			key = df.sessionKey(kPair.getPrivate(), publicKey);
-			
-			//Init Cipher
-			String type = "AES/CFB8/PKCS5Padding";
-			c = initCipherByType(type, Cipher.DECRYPT_MODE, key, iv);
-			this.cis = new CipherInputStream(s.getInputStream(), c);
-			
-		}catch(IOException | ClassNotFoundException   e){
-			System.out.println("ERROR: Creating CipherInputStream!!\n");
-		}
+		//Init Message_Handler and Get PublicKey
+		handler = new Message_Handler(s);
+		publicKey = handler.SendRecvKey(kPair.getPublic());
+		
+		//Generate SessionKey
+		key = df.sessionKey(kPair.getPrivate(), publicKey);
+		
+		//Init Cipher
+		String type = "AES/CFB8/PKCS5Padding";	
+		c = initCipherByType(type, Cipher.DECRYPT_MODE, key, iv);
+		
+		//Prepare Message_Handler with Cipher
+		handler.setCipher(c);
 	}
 	
+	
 	public void run() {
-
+		String recv;
 		try{
-			
-			System.out.println("Chega While!!");
-			int test;
-			while ((test=cis.read()) != -1) {
-               	//System.out.println("***"+test+"***");
-				System.out.print((char) test);
+			while(bool){
+				
+				recv = handler.receiveMessage();
+				System.out.println(recv);
 				
 				/*
 				str = in.readLine();
@@ -71,7 +66,6 @@ public class ThreadServer extends InitCipher implements Runnable {
 				out.write(id+": "+ str + "\n");
 				out.flush();
 				*/
-			
             }
 				
 			System.out.println("=["+ id +"]=\n");
