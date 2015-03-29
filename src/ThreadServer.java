@@ -1,26 +1,20 @@
-import java.io.BufferedReader;
+
 import java.io.BufferedWriter;
 import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.security.KeyPair;
 import java.security.PublicKey;
 
 import javax.crypto.Cipher;
-import javax.crypto.CipherInputStream;
 
 
 public class ThreadServer extends InitCipher implements Runnable {
 
 	private int id;
 	private Socket socket;
-	private BufferedReader in;
 	private Message_Handler handler;
 	
-	private byte[] key ;
 	private byte[] iv = "1234567812345678".getBytes();
-	private Cipher c;
 	private boolean bool=true;
 	
 	
@@ -29,6 +23,7 @@ public class ThreadServer extends InitCipher implements Runnable {
 		this.id=num;
 		this.socket=s;
 		PublicKey publicKey;
+		Cipher c;
 		
 		//To accord the Diffie-Hellman Key
 		DiffieHellman df = new DiffieHellman();
@@ -39,7 +34,7 @@ public class ThreadServer extends InitCipher implements Runnable {
 		publicKey = handler.SendRecvKey(kPair.getPublic());
 		
 		//Generate SessionKey
-		key = df.sessionKey(kPair.getPrivate(), publicKey);
+		byte[] key = df.sessionKey(kPair.getPrivate(), publicKey);
 		
 		//Init Cipher
 		String type = "AES/CFB8/PKCS5Padding";	
@@ -47,6 +42,7 @@ public class ThreadServer extends InitCipher implements Runnable {
 		
 		//Prepare Message_Handler with Cipher
 		handler.setCipher(c);
+		handler.setMac(key);
 	}
 	
 	
@@ -59,7 +55,6 @@ public class ThreadServer extends InitCipher implements Runnable {
 				System.out.println(recv);
 				
 				/*
-				str = in.readLine();
 				if(str.equals("Sair")) break;
 				else if(str.equals("Shutdown")){ server.shutdown(); break;}
 				
@@ -70,7 +65,6 @@ public class ThreadServer extends InitCipher implements Runnable {
 				
 			System.out.println("=["+ id +"]=\n");
 			
-			in.close();
 			socket.close();
 		}catch(IOException e){}
 	}

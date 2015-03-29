@@ -56,15 +56,5 @@ public class DiffieHellman {
 
 		return key;
 	}
-
-	/*public static void main(String[] args) {
-
-		DiffieHellman df = new DiffieHellman();
-		KeyPair aPair = df.generateKey();
-		KeyPair bPair = df.generateKey();
-
-		df.sessionKey(aPair.getPrivate(), bPair.getPublic());
-		df.sessionKey(bPair.getPrivate(), aPair.getPublic());
-
-	}*/
+	
 }

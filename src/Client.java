@@ -48,12 +48,11 @@ public class Client extends InitCipher{
 			
 			//Prepare Message_Handler with Cipher
 			handler.setCipher(c);
+			handler.setMac(key);
 			in = new BufferedReader(new InputStreamReader(System.in));
 			
 			while(bool){
 				msg = in.readLine();
-				System.out.println(msg.length());
-				
 				handler.sendMessage(msg);
 				
 				/*
