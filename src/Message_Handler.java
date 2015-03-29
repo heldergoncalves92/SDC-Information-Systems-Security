@@ -1,15 +1,13 @@
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.io.UnsupportedEncodingException;
 import java.net.Socket;
 import java.security.PublicKey;
+import java.util.Arrays;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
 import javax.crypto.IllegalBlockSizeException;
-
-import com.sun.xml.internal.messaging.saaj.util.Base64;
 
 
 public class Message_Handler {
@@ -43,7 +41,8 @@ public class Message_Handler {
 	
 	public void sendMessage(String msg){
 		try {
-			byte[] encoded = Base64.encode(msg.getBytes());
+			int padding = 16 - msg.length()%16;
+			byte[] encoded = Arrays.copyOf(msg.getBytes(), msg.length() + padding );
 			byte[] encrypted = cipher.doFinal(encoded);
 			
 			Message toSend = new Message(encrypted);
@@ -62,8 +61,7 @@ public class Message_Handler {
 		String msg = "Recebeu sem sucesso!!\n";
 		try {
 			received = (Message)in.readObject();
-			byte[] decrypted = cipher.doFinal(received.getMsg());
-			msg = Base64.base64Decode(new String(decrypted));
+			msg = new String(cipher.doFinal(received.getMsg()));
 			
 		} catch ( IOException | ClassNotFoundException | IllegalBlockSizeException | BadPaddingException e) {
 			// TODO Auto-generated catch block
@@ -88,19 +86,5 @@ public class Message_Handler {
 	public void setCipher(Cipher c){
 		this.cipher = c;
 	}
-	
-
-	/*public static void main(String[] args) throws UnsupportedEncodingException {
-		String msg = "Tudo bem!";
-		System.out.println(msg.length());
-		byte[] encoded = Base64.encode(msg.getBytes());
-		
-		System.out.println(encoded);
-		
-		String decoded = Base64.base64Decode(new String(encoded));
-		System.out.println("Resultado: "+ decoded);
-		
-		
-	}*/
 	
 }
