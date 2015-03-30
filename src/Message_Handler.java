@@ -48,15 +48,15 @@ public class Message_Handler {
 		try {
 			int padding = 16 - msg.length()%16;
 			
-			//Prepare to encrypt and generate MAC
+			//Prepare to encrypt
 			byte[] encoded = Arrays.copyOf(msg.getBytes(), msg.length() + padding );
-			byte[] mac = macHandler.doFinal(encoded);
 			
-			//Encrypt
+			//Encrypt and generate MAC
 			byte[] msgEncrypted = cipher.doFinal(encoded);
-			byte[] macEncrypted = cipher.doFinal(mac);
+			byte[] mac = macHandler.doFinal(msgEncrypted);
 			
-			Message toSend = new Message(msgEncrypted, macEncrypted);
+			//Create Object and Send it
+			Message toSend = new Message(msgEncrypted, mac);
 			out.writeObject(toSend);
 			out.flush();
 			
@@ -71,14 +71,15 @@ public class Message_Handler {
 		Message received;
 		String msg = "Recebeu sem sucesso!!\n";
 		try {
+			//Receive Object
 			received = (Message)in.readObject();
 			
-			byte[] decoded = cipher.doFinal(received.getMsg());
-			byte[] mac = cipher.doFinal(received.getMac());
-			
-			if(Arrays.equals(mac, macHandler.doFinal(decoded)))
-				msg = new String(decoded);
-			else
+			//Mac Autentication
+			if(Arrays.equals(received.getMac(), macHandler.doFinal(received.getMsg()))){
+				
+				//Decrypt and get message
+				msg = new String(cipher.doFinal(received.getMsg()));
+			}else
 				msg = "MAC não é aceite!!";
 			
 		} catch ( IOException | ClassNotFoundException | IllegalBlockSizeException | BadPaddingException e) {
@@ -103,7 +104,7 @@ public class Message_Handler {
 	
 	public void setMac(byte[] sessionKey){
 		try {			
-			SecretKeySpec key = new SecretKeySpec(sessionKey, "HmacMD5");
+			SecretKeySpec key = new SecretKeySpec(Arrays.copyOfRange(sessionKey, 0, 15), "HmacSHA1");
 			this.macHandler = Mac.getInstance(key.getAlgorithm());
 			this.macHandler.init(key);
 

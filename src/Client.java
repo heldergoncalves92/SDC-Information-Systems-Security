@@ -40,10 +40,10 @@ public class Client extends InitCipher{
 			publicKey = handler.SendRecvKey(kPair.getPublic());
 			
 			//Generate SessionKey
-			key = df.sessionKey(kPair.getPrivate(), publicKey);
+			byte[] key = df.sessionKey(kPair.getPrivate(), publicKey);
 		
 			//Init Cipher
-			String type = "AES/CFB8/PKCS5Padding";	
+			String type = "AES/CBC/NoPadding";	
 			c = initCipherByType(type, Cipher.ENCRYPT_MODE, key, iv);
 			
 			//Prepare Message_Handler with Cipher

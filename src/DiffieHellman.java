@@ -3,6 +3,7 @@ import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
+import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.PublicKey;
@@ -48,6 +49,12 @@ public class DiffieHellman {
 			keyAgg.init(secretKey);
 			keyAgg.doPhase(publicKey, true);
 			key = keyAgg.generateSecret();
+			
+			// Initialize object that will hash my key.
+			MessageDigest hasher = MessageDigest.getInstance("SHA-256");
+			
+			// Hash the key to 256 bits
+	        key = hasher.digest(key);  
 
 		} catch (NoSuchAlgorithmException | InvalidKeyException e) {
 			// TODO Auto-generated catch block

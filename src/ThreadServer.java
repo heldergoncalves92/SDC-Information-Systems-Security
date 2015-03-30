@@ -37,7 +37,7 @@ public class ThreadServer extends InitCipher implements Runnable {
 		byte[] key = df.sessionKey(kPair.getPrivate(), publicKey);
 		
 		//Init Cipher
-		String type = "AES/CFB8/PKCS5Padding";	
+		String type = "AES/CBC/NoPadding";	
 		c = initCipherByType(type, Cipher.DECRYPT_MODE, key, iv);
 		
 		//Prepare Message_Handler with Cipher
