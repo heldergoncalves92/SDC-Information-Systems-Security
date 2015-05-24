@@ -46,7 +46,11 @@ public class Message_Handler {
 	
 	public void sendMessage(String msg){
 		try {
-			int padding = 16 - msg.length()%16;
+			int padding;
+			int auxPad = msg.length()%16;
+			
+			if(auxPad == 0)	padding = 0;
+			else padding = 16 - auxPad;
 			
 			//Prepare to encrypt
 			byte[] encoded = Arrays.copyOf(msg.getBytes(), msg.length() + padding );
@@ -78,7 +82,7 @@ public class Message_Handler {
 			if(Arrays.equals(received.getMac(), macHandler.doFinal(received.getMsg()))){
 				
 				//Decrypt and get message
-				msg = new String(cipher.doFinal(received.getMsg()));
+				msg = new String(cipher.doFinal(received.getMsg())).trim();
 			}else
 				msg = "MAC não é aceite!!";
 			

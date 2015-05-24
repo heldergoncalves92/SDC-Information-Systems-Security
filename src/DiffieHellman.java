@@ -33,7 +33,10 @@ public class DiffieHellman {
 			keyGenerator.initialize(dh, new SecureRandom());
 			aPair = keyGenerator.generateKeyPair();
 
-		} catch (NoSuchAlgorithmException | InvalidAlgorithmParameterException e) {
+		} catch (InvalidAlgorithmParameterException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (NoSuchAlgorithmException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
@@ -45,7 +48,8 @@ public class DiffieHellman {
 		byte[] key = null;
 
 		try {
-			KeyAgreement keyAgg = KeyAgreement.getInstance("DH");
+			KeyAgreement keyAgg;
+			keyAgg = KeyAgreement.getInstance("DH");		
 			keyAgg.init(secretKey);
 			keyAgg.doPhase(publicKey, true);
 			key = keyAgg.generateSecret();
@@ -55,11 +59,14 @@ public class DiffieHellman {
 			
 			// Hash the key to 256 bits
 	        key = hasher.digest(key);  
-
-		} catch (NoSuchAlgorithmException | InvalidKeyException e) {
+		} catch (NoSuchAlgorithmException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (InvalidKeyException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+		
 
 		return key;
 	}

@@ -10,7 +10,7 @@ import java.util.HashMap;
 public class Server extends Thread {
 	
 	private ServerSocket ss;
-	private HashMap<Integer,ThreadServer> clients;
+	private HashMap<Integer,ServerHandler> clients;
 	private static int num=0;
 	private BufferedWriter file;
 	private Boolean bool=true;
@@ -18,7 +18,7 @@ public class Server extends Thread {
 	public Server(int port) throws IOException{
 		
 		ss = new ServerSocket(port);
-		clients = new HashMap<Integer,ThreadServer>();
+		clients = new HashMap<Integer,ServerHandler>();
 
 	}
 	
@@ -31,15 +31,14 @@ public class Server extends Thread {
 				s = ss.accept();
 			
 				System.out.println("Nova Socket\n");
-				ThreadServer cli = new ThreadServer(num, s, file, this);
+				ServerHandler cli = new ServerHandler(num, s, file, this);
 				
 				new Thread(cli).start();
-				
 				clients.put(num++, cli);
 		}
 		
 		System.out.println("Fecha todas as conecções\n");
-		for(ThreadServer cli: clients.values()){
+		for(ServerHandler cli: clients.values()){
 			cli.closeConn();
 			
 		}
