@@ -1,3 +1,5 @@
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -14,13 +16,14 @@ import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 
 
-public class Message_Handler {
+public class Message_Handler extends Thread{
 	
 	private Certs certs;
-	private Cipher cipher;
+	private Cipher cDecrypt, cEncrypt;
 	private Mac macHandler;
 	private ObjectInputStream in;
 	private ObjectOutputStream out;
+	private Boolean listening = false;
 	
 	public Message_Handler(Socket s){
 		try {
@@ -34,12 +37,13 @@ public class Message_Handler {
 		}
 	}
 	
-	public Message_Handler(Socket s, Cipher c){
+	public Message_Handler(Socket s, Cipher cDecrypt, Cipher cEncrypt){
 		try {
 			this.certs = new Certs();
 			this.out = new ObjectOutputStream(s.getOutputStream());
 			this.in = new ObjectInputStream(s.getInputStream());
-			this.cipher=c;
+			this.cDecrypt = cDecrypt;
+			this.cEncrypt = cEncrypt;
 		
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
@@ -47,19 +51,55 @@ public class Message_Handler {
 		}
 	}
 	
-	public void sendMessage(String msg){
+	public void setListening(Boolean b){
+		this.listening = b;
+	}
+	
+	public byte[] objToByteArray(Object obj){
+		byte[] data = null;
+		
 		try {
+			ByteArrayOutputStream  bos = new ByteArrayOutputStream();
+			ObjectOutputStream oout = new ObjectOutputStream(bos);
+			oout.writeObject(obj);
+			data = bos.toByteArray();
+			
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return data;
+	}
+	
+	public Object byteArrayToObj(byte[] data){
+		Object obj = null;
+		try {
+			ObjectInputStream oin = new ObjectInputStream(new ByteArrayInputStream(data));
+			obj = oin.readObject();
+			
+		} catch (IOException | ClassNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return obj;
+	}
+	
+	public void sendMessage(Object msg){
+		byte[] toEncode;
+		try {
+			toEncode = objToByteArray(msg);
+			
 			int padding;
-			int auxPad = msg.length()%16;
+			int auxPad = toEncode.length%16;
 			
 			if(auxPad == 0)	padding = 0;
 			else padding = 16 - auxPad;
 			
 			//Prepare to encrypt
-			byte[] encoded = Arrays.copyOf(msg.getBytes(), msg.length() + padding );
+			byte[] encoded = Arrays.copyOf(toEncode, toEncode.length + padding );
 			
 			//Encrypt and generate MAC
-			byte[] msgEncrypted = cipher.doFinal(encoded);
+			byte[] msgEncrypted = cEncrypt.doFinal(encoded);
 			byte[] mac = macHandler.doFinal(msgEncrypted);
  			
 			//Create Object and Send it
@@ -71,12 +111,12 @@ public class Message_Handler {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		
 	}
 	
-	public String receiveMessage(){
+	public Object receiveMessage() throws ClassNotFoundException, IOException{
+		byte[] data;
 		Message received;
-		String msg = "Recebeu sem sucesso!!\n";
+		Object msg = "Recebeu sem sucesso!!\n";
 		try {
 			//Receive Object
 			received = (Message)in.readObject();
@@ -85,11 +125,18 @@ public class Message_Handler {
 			if(Arrays.equals(received.getMac(), macHandler.doFinal(received.getMsg()))){
 				
 				//Decrypt and get message
-				msg = new String(cipher.doFinal(received.getMsg())).trim();
+				
+				data = cDecrypt.doFinal(received.getMsg());
+				msg = byteArrayToObj(data);
+				/*
+				if(msg.getClass().equals("java.lang.String")){
+					String s = (String)msg;
+					System.out.println("É uma String" + s.trim());
+				}*/
 			}else
 				msg = "MAC não é aceite!!";
 			
-		} catch ( IOException | ClassNotFoundException | IllegalBlockSizeException | BadPaddingException e) {
+		} catch (IllegalBlockSizeException | BadPaddingException e) {
 			//e.printStackTrace();
 		}
 		return msg;
@@ -144,8 +191,9 @@ public class Message_Handler {
 		}
 	}
 	
-	public void setCipher(Cipher c){
-		this.cipher = c;
+	public void setCipher(Cipher cDecrypt, Cipher cEncrypt){
+		this.cDecrypt = cDecrypt;
+		this.cEncrypt = cEncrypt;
 	}
 	
 	public void initToVerify(){
@@ -154,6 +202,35 @@ public class Message_Handler {
 	
 	public void initToSign(){
 		this.certs.initToSign();
+	}
+	
+	//To listening new messages
+	public void run(){
+		String recv = "";
+		
+		try{
+			while(true){
+				
+				while(listening == false) Thread.sleep(1000);
+				
+				//System.out.println("Client Start Listning");
+				while(true){
+					recv = (String)this.receiveMessage();	
+					recv.trim();
+					
+					//Write on screen
+					System.out.println(recv);
+					
+					if(recv.equals("LOGOUT")) break;
+
+				}
+				listening = false;
+				//System.out.println("Client Close Listening");
+			}
+		}catch(Exception e){
+			System.out.println("ERROR");
+		}
+		System.out.println("Client Close Connection!!");
 	}
 	
 }

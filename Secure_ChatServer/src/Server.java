@@ -5,20 +5,40 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.HashMap;
+import java.util.logging.FileHandler;
+import java.util.logging.Handler;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 
 public class Server extends Thread {
 	
 	private ServerSocket ss;
-	private HashMap<Integer,ServerHandler> clients;
+	private HashMap<Integer,ServerHandler> online;
 	private static int num=0;
 	private BufferedWriter file;
 	private Boolean bool=true;
+	private Logger logger;
 	
 	public Server(int port) throws IOException{
 		
 		ss = new ServerSocket(port);
-		clients = new HashMap<Integer,ServerHandler>();
+		online = new HashMap<Integer,ServerHandler>();
+		initLogger();
+	}
+	
+	private void initLogger(){
+		String logPath = "./";
+		try {
+			this.logger = Logger.getLogger(Server.class.getName());
+			Handler fileHandler = new FileHandler(logPath + "chatServer.log", 2000, 5);
+			fileHandler.setFormatter(new MyFormatter());
+			this.logger.addHandler(fileHandler);
+			//System.out.println("LOGGER STARTED!!");
+			
+		} catch (SecurityException | IOException e) {
+			e.printStackTrace();
+		}
 	}
 	
 	private void runServer() throws IOException{
@@ -29,15 +49,14 @@ public class Server extends Thread {
 		while(bool){
 				s = ss.accept();
 			
-				System.out.println("Nova Socket\n");
-				ServerHandler cli = new ServerHandler(num, s, file, this);
+				logger.log(Level.CONFIG, "NEW Scocket Connection");
+				ServerHandler cli = new ServerHandler(num++, s, file, online, logger);
 				
 				new Thread(cli).start();
-				clients.put(num++, cli);
 		}
 		
 		System.out.println("Fecha todas as conecções\n");
-		for(ServerHandler cli: clients.values()){
+		for(ServerHandler cli: online.values()){
 			cli.closeConn();
 			
 		}
